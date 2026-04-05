@@ -11,12 +11,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Setup Python
-      uses: mamba-org/provision-with-micromamba@main
+      uses: mamba-org/setup-micromamba@v1
       with:
         environment-file: environment.yml
-        extra-specs: |
-          meson-python
-          python-build
+        create-args: >-
+          meson-python python-build
+          qcelemental
     - run: |
         python -m build . --sdist --outdir . -n ${{ env.SETUP_ARGS }}
       env:
@@ -43,15 +43,13 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Setup Python
-      uses: mamba-org/provision-with-micromamba@main
+      uses: mamba-org/setup-micromamba@v1
       with:
         environment-file: environment.yml
-        extra-specs: |
-          c-compiler
-          fortran-compiler
-          meson-python
+        create-args: >-
           python=${{ matrix.python }}
-          pytest
+          c-compiler fortran-compiler meson-python pytest
+          ${{ (matrix.python == '3.14' || matrix.python == '3.13') && 'conda-forge/label/qcelemental_dev::qcelemental>=0.50.0rc3' || 'qcelemental' }}
 
     - name: Setup build of extension module
       run: |
