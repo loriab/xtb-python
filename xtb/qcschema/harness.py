@@ -34,6 +34,7 @@ Supported keywords are
 ======================== =========== ============================================
 """
 
+import sys
 from typing import Union
 from tempfile import NamedTemporaryFile
 from ..libxtb import VERBOSITY_MUTED, get_api_version
@@ -41,6 +42,26 @@ from ..interface import Calculator, XTBException
 from ..utils import get_method, get_solvent
 import qcelemental as qcel
 
+if sys.version_info < (3, 14):
+    try:
+        import qcelemental.models.v1 as qcel_v1
+    except ModuleNotFoundError:
+        import qcelemental.models as qcel_v1
+else:
+    qcel_v1 = None
+
+try:
+    import qcelemental.models.v2 as qcel_v2
+except ModuleNotFoundError:
+    qcel_v2 = None
+qcel_v2 = None
+
+
+if qcel_v1 is None and qcel_v2 is None:
+    raise ModuleNotFoundError(
+        "The qcelemental package is required for qcschema support. "
+        "Please install it with 'pip install qcelemental'."
+    )
 
 _keywords = [
     "accuracy",
