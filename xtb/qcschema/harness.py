@@ -35,12 +35,11 @@ Supported keywords are
 """
 
 import sys
-from typing import Union
+from typing import Any, Dict, overload, Union
 from tempfile import NamedTemporaryFile
 from ..libxtb import VERBOSITY_MUTED, get_api_version
 from ..interface import Calculator, XTBException
 from ..utils import get_method, get_solvent
-import qcelemental as qcel
 
 if sys.version_info < (3, 14):
     try:
@@ -54,7 +53,6 @@ try:
     import qcelemental.models.v2 as qcel_v2
 except ModuleNotFoundError:
     qcel_v2 = None
-qcel_v2 = None
 
 
 if qcel_v1 is None and qcel_v2 is None:
@@ -72,10 +70,21 @@ _keywords = [
 ]
 
 
-def run_qcschema(
-    input_data: Union[dict, qcel.models.AtomicInput]
-) -> qcel.models.AtomicResult:
-    """Perform a calculation based on an atomic input model.
+if qcel_v1 is not None:
+    @overload
+    def run_qcschema(
+        input_data: Union[Dict[str, Any], "qcel_v1.AtomicInput"],
+    ) -> Union["qcel_v1.AtomicResult", "qcel_v1.FailedOperation"]: ...
+
+if qcel_v2 is not None:
+    @overload
+    def run_qcschema(
+        input_data: Union[Dict[str, Any], "qcel_v2.AtomicInput"],
+    ) -> Union["qcel_v2.AtomicResult", "qcel_v2.FailedOperation"]: ...
+
+
+def run_qcschema(input_data):
+    """Perform a calculation based on a v1 or v2 QCSchema atomic input model.
 
     Example
     -------
@@ -105,11 +114,38 @@ def run_qcschema(
     -5.070451354848316
     """
 
-    if not isinstance(input_data, qcel.models.AtomicInput):
-        atomic_input = qcel.models.AtomicInput(**input_data)
-    else:
+    if qcel_v2 is not None and isinstance(input_data, qcel_v2.AtomicInput):
         atomic_input = input_data
-    ret_data = atomic_input.dict()
+    elif qcel_v1 is not None and isinstance(input_data, qcel_v1.AtomicInput):
+        atomic_input = input_data
+    elif qcel_v2 is not None and input_data.get("specification"):
+        atomic_input = qcel_v2.AtomicInput(**input_data)
+    elif qcel_v1 is not None:
+        atomic_input = qcel_v1.AtomicInput(**input_data)
+    else:
+        raise ValueError(
+            "Input data is not a valid QCSchema AtomicInput for either v1 or v2."
+        )
+
+    schema_version = atomic_input.schema_version
+    if schema_version == 1:
+        ret_data = atomic_input.dict()
+        input_keywords = atomic_input.keywords
+        input_method = atomic_input.model.method
+        input_driver = atomic_input.driver
+    elif schema_version == 2:
+        ret_data = {
+            "input_data": atomic_input,
+            "extras": {},
+            "molecule": atomic_input.molecule,
+        }
+        input_keywords = atomic_input.specification.keywords
+        input_method = atomic_input.specification.model.method
+        input_driver = atomic_input.specification.driver
+    else:
+        raise ValueError(
+            f"Unsupported QCSchema version: {schema_version}. Only v1 and v2 are supported."
+        )
 
     provenance = {
         "creator": "xtb",
@@ -117,24 +153,29 @@ def run_qcschema(
         "routine": "xtb.qcschema.run_qcschema",
     }
 
-    _method = get_method(atomic_input.model.method)
+    _method = get_method(input_method)
     if _method is None:
-        ret_data.update(
-            success=False,
-            return_result=0.0,
-            provenance=provenance,
-            properties={},
-            error=qcel.models.ComputeError(
-                error_type="input_error",
-                error_message="Invalid method {} provided in model".format(
-                    atomic_input.model.method
-                ),
+        error = dict(
+            error_type="input_error",
+            error_message="Invalid method {} provided in model".format(
+                input_method
             ),
         )
+        if schema_version == 1:
+            ret_data.update(
+                success=False,
+                return_result=0.0,
+                provenance=provenance,
+                properties={},
+                error=error,
+            )
+            return qcel_v1.AtomicResult(**ret_data)
+        elif schema_version == 2:
+            return qcel_v2.FailedOperation(
+                input_data=atomic_input, error=qcel_v2.ComputeError(**error)
+            )
 
-        return qcel.models.AtomicResult(**ret_data)
-
-    verbosity = atomic_input.keywords.get("verbosity", "full")
+    verbosity = input_keywords.get("verbosity", "full")
     fd = None
     output = None
     success = True
@@ -147,18 +188,18 @@ def run_qcschema(
             atomic_input.molecule.molecular_multiplicity - 1,
         )
 
-        if "solvent" in atomic_input.keywords:
-            calc.set_solvent(get_solvent(atomic_input.keywords["solvent"]))
+        if "solvent" in input_keywords:
+            calc.set_solvent(get_solvent(input_keywords["solvent"]))
 
-        if "accuracy" in atomic_input.keywords:
-            calc.set_accuracy(atomic_input.keywords["accuracy"])
+        if "accuracy" in input_keywords:
+            calc.set_accuracy(input_keywords["accuracy"])
 
-        if "max_iterations" in atomic_input.keywords:
-            calc.set_max_iterations(atomic_input.keywords["max_iterations"])
+        if "max_iterations" in input_keywords:
+            calc.set_max_iterations(input_keywords["max_iterations"])
 
-        if "electronic_temperature" in atomic_input.keywords:
+        if "electronic_temperature" in input_keywords:
             calc.set_electronic_temperature(
-                atomic_input.keywords["electronic_temperature"]
+                input_keywords["electronic_temperature"]
             )
 
         # Work out how verbose the printing from xtb should be
@@ -186,11 +227,11 @@ def run_qcschema(
             extras["xtb"]["mulliken_charges"] = res.get_charges()
             extras["xtb"]["mayer_indices"] = res.get_bond_orders()
 
-        if atomic_input.driver == "energy":
+        if input_driver == "energy":
             return_result = properties["return_energy"]
-        elif atomic_input.driver == "gradient":
+        elif input_driver == "gradient":
             return_result = extras["xtb"]["return_gradient"]
-        elif atomic_input.driver == "properties":
+        elif input_driver == "properties":
             return_result = {
                 "dipole": properties["scf_dipole_moment"],
             }
@@ -202,7 +243,7 @@ def run_qcschema(
             success = False
 
             ret_data.update(
-                error=qcel.models.ComputeError(
+                error=dict(
                     error_type="input_error",
                     error_message="Calculation succeeded but invalid driver request provided",
                 ),
@@ -214,9 +255,7 @@ def run_qcschema(
         success = False
 
         ret_data.update(
-            error=qcel.models.ComputeError(
-                error_type="runtime_error", error_message=str(ee),
-            ),
+            error=dict(error_type="runtime_error", error_message=str(ee)),
         )
         return_result = 0.0
         properties = {}
@@ -232,4 +271,11 @@ def run_qcschema(
         return_result=return_result,
     )
 
-    return qcel.models.AtomicResult(**ret_data, stdout=output)
+    if schema_version == 1:
+        return qcel_v1.AtomicResult(**ret_data)
+
+    if "error" in ret_data:
+        return qcel_v2.FailedOperation(
+            input_data=atomic_input, error=ret_data["error"]
+        )
+    return qcel_v2.AtomicResult(**ret_data)

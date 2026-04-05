@@ -247,8 +247,8 @@ def get_atomic_input(
                     "method": method,
                 },
                 "keywords": keywords,
+                "extras": extras,
             },
-            "extras": extras,
         }
         if qcel_object:
             return qcel_v2.AtomicInput(**input_data)
@@ -333,7 +333,10 @@ def test_gfn1xtb_gradient(qcsk_version: int):
     assert approx(atomic_result.properties.return_energy, abs=thr) == -33.63768565903155
     assert approx(atomic_result.properties.scf_dipole_moment, abs=thr) == dipole_moment
     assert approx(atomic_result.return_result, abs=thr) == gradient
-    assert atomic_result.extras["important"] == entry
+    if qcsk_version == 1:
+        assert atomic_result.extras["important"] == entry
+    elif qcsk_version == 2:
+        assert atomic_result.input_data.specification.extras["important"] == entry
 
 
 def test_gfn2xtb_gradient(qcsk_version: int):
