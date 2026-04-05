@@ -9,7 +9,7 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Setup Python
       uses: mamba-org/provision-with-micromamba@main
       with:
@@ -23,7 +23,7 @@ jobs:
         SETUP_ARGS: >-
           -Csetup-args=-Dxtb-6.5.1:la_backend=netlib
           -Csetup-args=-Dmctc-lib:json=disabled
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: xtb-python-sdist
         path: ./*.tar.gz
@@ -40,7 +40,7 @@ jobs:
         python: ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Setup Python
       uses: mamba-org/provision-with-micromamba@main
@@ -99,7 +99,7 @@ jobs:
         wheel
         xtb
     - name: Download sdist
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: xtb-python-sdist
     - name: Build wheel
@@ -115,7 +115,7 @@ jobs:
         SETUP_ARGS: >-
           -Csetup-args=-Dxtb-6.5.1:la_backend=netlib
           -Csetup-args=-Dmctc-lib:json=disabled
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: xtb-python-${{ matrix.python }}
         path: ./*.whl
@@ -128,7 +128,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           path: ${{ github.workspace }}  # This will download all files
 
