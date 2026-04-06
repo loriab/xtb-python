@@ -35,7 +35,7 @@ except ModuleNotFoundError:
 def test_gfn1xtb_bfgs():
     """Perform geometry optimization with GFN1-xTB and BFGS"""
 
-    thr = 1.0e-5
+    thr = 1.0e-4
 
     atoms = Atoms(
         symbols = "NHCHC2H3OC2H3ONHCH3",

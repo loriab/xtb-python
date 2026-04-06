@@ -16,6 +16,7 @@ jobs:
         environment-file: environment.yml
         create-args: >-
           meson-python python-build
+          xtb
           qcelemental
     - run: |
         python -m build . --sdist --outdir . -n ${{ env.SETUP_ARGS }}
