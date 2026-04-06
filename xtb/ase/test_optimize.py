@@ -20,6 +20,7 @@ from pytest import approx, mark
 import numpy as np
 
 try:
+    import ase
     from xtb.ase.calculator import XTB
     from ase.atoms import Atoms
     from ase.optimize.bfgs import BFGS

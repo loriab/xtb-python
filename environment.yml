@@ -5,4 +5,5 @@ dependencies:
   - ase
   - cffi
   - numpy
+  - setuptools
   # - qcelemental  # added with logic in GHA
