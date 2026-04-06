@@ -52,11 +52,22 @@ jobs:
           xtb
           ${{ (matrix.python == '3.14' || matrix.python == '3.13') && 'conda-forge/label/qcelemental_dev::qcelemental>=0.50.0rc3' || 'qcelemental' }}
 
+    - name: Debug xtb discovery
+      run: |
+        echo "CONDA_PREFIX=$CONDA_PREFIX"
+        find "$CONDA_PREFIX" -name 'xtb*.pc' -o -name 'pkgconfig' | sort
+        export PKG_CONFIG_PATH="$CONDA_PREFIX/lib/pkgconfig:$CONDA_PREFIX/share/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+        echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
+        pkg-config --list-all | grep -i xtb || true
+        pkg-config --modversion xtb || true
+        pkg-config --cflags --libs xtb || true
+
     - name: Setup build of extension module
       run: |
         pip3 install . ${{ env.SETUP_ARGS }}
       env:
         SETUP_ARGS: >-
+          --config-settings setup-args=-Dpkg_config_path=$CONDA_PREFIX/lib/pkgconfig
           --config-settings setup-args=-Dxtb-6.7.1:la_backend=netlib
 
     - name: Test Python package
