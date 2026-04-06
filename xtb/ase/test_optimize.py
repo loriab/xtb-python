@@ -68,8 +68,8 @@ def test_gfn1xtb_bfgs():
     opt = BFGS(atoms)
     opt.run(fmax=0.1)
 
-    assert approx(atoms.get_potential_energy(), thr) == -951.9006674709672
-    assert approx(np.linalg.norm(atoms.get_forces(), ord=2), thr) == 0.2052117803208497
+    assert approx(atoms.get_potential_energy(), abs=thr) == -951.9006674709672
+    assert approx(np.linalg.norm(atoms.get_forces(), ord=2), abs=thr) == 0.2052117803208497
 
 
 @mark.skipif(ase is None, reason="requires ase")
@@ -110,8 +110,8 @@ def test_gfn2xtb_lbfgs():
     opt = LBFGS(atoms)
     opt.run(fmax=0.1)
 
-    assert approx(atoms.get_potential_energy(), thr) == -897.4533662470938
-    assert approx(np.linalg.norm(atoms.get_forces(), ord=2), thr) == 0.19359647527783497
+    assert approx(atoms.get_potential_energy(), abs=thr) == -897.4533662470938
+    assert approx(np.linalg.norm(atoms.get_forces(), ord=2), abs=thr) == 0.19359647527783497
 
 
 @mark.skipif(ase is None, reason="requires ase")
@@ -153,11 +153,11 @@ def test_gfn2xtb_velocityverlet():
     dyn = VelocityVerlet(atoms, timestep=1.0*fs)
     dyn.run(20)
 
-    assert approx(atoms.get_potential_energy(), thr) == -896.9772346260584
-    assert approx(atoms.get_kinetic_energy(), thr) == 0.022411127028842362
+    assert approx(atoms.get_potential_energy(), abs=thr) == -896.9772346260584
+    assert approx(atoms.get_kinetic_energy(), abs=thr) == 0.022411127028842362
 
     atoms.calc.set(cache_api=True)
     dyn.run(20)
 
-    assert approx(atoms.get_potential_energy(), thr) == -896.9913862530841
-    assert approx(atoms.get_kinetic_energy(), thr) == 0.036580471363852810
+    assert approx(atoms.get_potential_energy(), abs=thr) == -896.9913862530841
+    assert approx(atoms.get_kinetic_energy(), abs=thr) == 0.036580471363852810
