@@ -35,4 +35,5 @@ optional-dependencies.test = [
   "pytest-cov",
   "ase",
   "qcelemental",
+  "setuptools",
 ]
