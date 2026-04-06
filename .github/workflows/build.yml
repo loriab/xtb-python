@@ -49,6 +49,7 @@ jobs:
         create-args: >-
           python=${{ matrix.python }}
           c-compiler fortran-compiler meson-python pytest
+          xtb
           ${{ (matrix.python == '3.14' || matrix.python == '3.13') && 'conda-forge/label/qcelemental_dev::qcelemental>=0.50.0rc3' || 'qcelemental' }}
 
     - name: Setup build of extension module
