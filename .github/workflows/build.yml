@@ -38,7 +38,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
+        python: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
 
     steps:
     - uses: actions/checkout@v4
@@ -124,6 +124,7 @@ jobs:
       env:
         plat: manylinux${{ matrix.python == '3.6' && '2010' || '_2_12' }}_x86_64
         SETUP_ARGS: >-
+          -Csetup-args=-Dpkg_config_path=$CONDA_PREFIX/lib/pkgconfig
           -Csetup-args=-Dxtb-6.7.1:la_backend=netlib
           -Csetup-args=-Dmctc-lib:json=disabled
     - uses: actions/upload-artifact@v4
