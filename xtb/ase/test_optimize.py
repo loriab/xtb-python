@@ -16,16 +16,21 @@
 # along with xtb.  If not, see <https://www.gnu.org/licenses/>.
 """Tests for some higher level functionality of ASE using the xtb Calculator"""
 
-from xtb.ase.calculator import XTB
-from ase.atoms import Atoms
-from ase.optimize.bfgs import BFGS
-from ase.optimize.lbfgs import LBFGS
-from ase.md.verlet import VelocityVerlet
-from ase.units import fs
-from pytest import approx
+from pytest import approx, mark
 import numpy as np
 
+try:
+    from xtb.ase.calculator import XTB
+    from ase.atoms import Atoms
+    from ase.optimize.bfgs import BFGS
+    from ase.optimize.lbfgs import LBFGS
+    from ase.md.verlet import VelocityVerlet
+    from ase.units import fs
+except ModuleNotFoundError:
+    ase = None
 
+
+@mark.skipif(ase is None, reason="requires ase")
 def test_gfn1xtb_bfgs():
     """Perform geometry optimization with GFN1-xTB and BFGS"""
 
@@ -67,6 +72,7 @@ def test_gfn1xtb_bfgs():
     assert approx(np.linalg.norm(atoms.get_forces(), ord=2), thr) == 0.2052117803208497
 
 
+@mark.skipif(ase is None, reason="requires ase")
 def test_gfn2xtb_lbfgs():
     """Perform geometry optimization with GFN2-xTB and L-BFGS"""
 
@@ -108,6 +114,7 @@ def test_gfn2xtb_lbfgs():
     assert approx(np.linalg.norm(atoms.get_forces(), ord=2), thr) == 0.19359647527783497
 
 
+@mark.skipif(ase is None, reason="requires ase")
 def test_gfn2xtb_velocityverlet():
     """Perform molecular dynamics with GFN2-xTB and Velocity Verlet Integrator"""
 
