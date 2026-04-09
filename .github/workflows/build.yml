@@ -19,6 +19,7 @@ jobs:
           xtb
           qcelemental
     - run: |
+        export PKG_CONFIG_PATH="$CONDA_PREFIX/lib/pkgconfig:$CONDA_PREFIX/share/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
         python -m build . --sdist --outdir . -n ${{ env.SETUP_ARGS }}
       env:
         SETUP_ARGS: >-
@@ -84,7 +85,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
+        python: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
 
     defaults:
       run:

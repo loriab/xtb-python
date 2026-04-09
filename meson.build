@@ -18,6 +18,7 @@
 project(
   'xtb-python',
   'c',
+  version: '26.1',
   license: 'LGPL-3.0-or-later',
   default_options: [
     'default_library=static',
