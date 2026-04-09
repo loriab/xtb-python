@@ -11,7 +11,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Setup Python
-      uses: mamba-org/setup-micromamba@v1
+      uses: mamba-org/setup-micromamba@v3
       with:
         environment-file: environment.yml
         create-args: >-
@@ -25,7 +25,7 @@ jobs:
         SETUP_ARGS: >-
           -Csetup-args=-Dxtb-6.7.1:la_backend=netlib
           -Csetup-args=-Dmctc-lib:json=disabled
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: xtb-python-sdist
         path: ./*.tar.gz
@@ -45,7 +45,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Setup Python
-      uses: mamba-org/setup-micromamba@v1
+      uses: mamba-org/setup-micromamba@v3
       with:
         environment-file: environment.yml
         create-args: >-
@@ -53,16 +53,6 @@ jobs:
           c-compiler fortran-compiler meson-python pytest
           xtb
           ${{ (matrix.python == '3.14' || matrix.python == '3.13') && 'conda-forge/label/qcelemental_dev::qcelemental>=0.50.0rc3' || 'qcelemental' }}
-
-    - name: Debug xtb discovery
-      run: |
-        echo "CONDA_PREFIX=$CONDA_PREFIX"
-        find "$CONDA_PREFIX" -name 'xtb*.pc' -o -name 'pkgconfig' | sort
-        export PKG_CONFIG_PATH="$CONDA_PREFIX/lib/pkgconfig:$CONDA_PREFIX/share/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
-        echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
-        pkg-config --list-all | grep -i xtb || true
-        pkg-config --modversion xtb || true
-        pkg-config --cflags --libs xtb || true
 
     - name: Setup build of extension module
       run: |
@@ -111,7 +101,7 @@ jobs:
         wheel
         xtb
     - name: Download sdist
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: xtb-python-sdist
     - name: Build wheel
@@ -128,7 +118,7 @@ jobs:
           -Csetup-args=-Dpkg_config_path=$CONDA_PREFIX/lib/pkgconfig
           -Csetup-args=-Dxtb-6.7.1:la_backend=netlib
           -Csetup-args=-Dmctc-lib:json=disabled
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: xtb-python-${{ matrix.python }}
         path: ./*.whl
@@ -141,7 +131,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: ${{ github.workspace }}  # This will download all files
 
