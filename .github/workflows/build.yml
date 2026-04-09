@@ -113,6 +113,13 @@ jobs:
           CIBW_ARCHS_LINUX: ${{ matrix.archs_linux || '' }}
           CIBW_ARCHS_MACOS: ${{ matrix.archs_macos || '' }}
 
+          CIBW_BEFORE_BUILD_LINUX: >
+            which python &&
+            python -V &&
+            echo "$PATH" &&
+            pkg-config --modversion xtb &&
+            pkg-config --cflags --libs xtb
+
           # Linux setup inside the manylinux container
           CIBW_BEFORE_ALL_LINUX: >
             yum install -y pkgconfig &&
@@ -133,9 +140,9 @@ jobs:
 
           # Configure the build inside the Linux wheel container
           CIBW_ENVIRONMENT_LINUX: >
-            PATH="/opt/conda-env/bin:$PATH"
             PKG_CONFIG_PATH="/opt/conda-env/lib/pkgconfig:/opt/conda-env/share/pkgconfig"
             XTBPATH="/opt/conda-env/share/xtb"
+            LD_LIBRARY_PATH="/opt/conda-env/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
             PIP_CONFIG_SETTINGS="setup-args=-Dpkg_config_path=/opt/conda-env/lib/pkgconfig setup-args=-Dxtb-6.7.1:la_backend=netlib setup-args=-Dmctc-lib:json=disabled"
 
           # If xtb links shared libraries that need bundling, keep auditwheel repair enabled.
